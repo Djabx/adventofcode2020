@@ -60,8 +60,8 @@ class Line:
         return test
 
     def _idx_is_char(self, idx):
-        if (idx + 1) < len(self.pwd):
-            return self.pwd[idx + 1] == self.char
+        if idx < len(self.pwd):
+            return self.pwd[idx] == self.char
         return False
 
     def is_ok_for_cop(self):
@@ -73,8 +73,8 @@ class Line:
     def from_line(cls, line):
         info = line.replace(": ", " ").replace("-", " ")
         min_, max_, char, pwd = info.split(" ")
-        min_ = int(min_)
-        max_ = int(max_)
+        min_ = int(min_) - 1
+        max_ = int(max_) - 1
         x = cls(min=min_, max=max_, char=char, pwd=pwd)
         return x
 
