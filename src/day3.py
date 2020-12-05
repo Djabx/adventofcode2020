@@ -5,8 +5,6 @@ Position = collections.namedtuple("Position", ["x", "y"])
 
 TREE_CHAR = "#"
 
-USE_SAMPLE = False
-
 
 def get_num_of_tree(data, slope, p):
     total_tree = 0
@@ -23,7 +21,7 @@ def get_num_of_tree(data, slope, p):
     return total_tree
 
 
-data = [l for l in shared.get_data(3, sample=USE_SAMPLE)]
+data = [l for l in shared.get_data(3)]
 
 nt_3_1 = get_num_of_tree(
     data=data,
