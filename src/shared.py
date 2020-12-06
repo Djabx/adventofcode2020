@@ -13,7 +13,7 @@ def _get_data_name(num_day):
 
 def get_data(num_day):
     with open(_get_data_name(num_day)) as data_fh:
-        for line in data_fh(num_day):
+        for line in data_fh:
             line = line.strip()
             yield line
 
