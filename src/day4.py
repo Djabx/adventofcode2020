@@ -121,31 +121,20 @@ Count the number of valid passports - those that have all required fields and va
 
 """
 
-RE_YEAR = re.compile(r"\d{4}")
-
 
 def valid_byr(v):
     # byr (Birth Year) - four digits; at least 1920 and at most 2002.
-    if v and RE_YEAR.match(v):
-        vi = int(v)
-        return 1920 <= vi and vi <= 2002
-    return False
+    return 1920 <= int(v) <= 2002
 
 
 def valid_iyr(v):
     # iyr (Issue Year) - four digits; at least 2010 and at most 2020.
-    if v and RE_YEAR.match(v):
-        vi = int(v)
-        return 2010 <= vi and vi <= 2020
-    return False
+    return 2010 <= int(v) <= 2020
 
 
 def valid_eyr(v):
     # eyr (Expiration Year) - four digits; at least 2020 and at most 2030.
-    if v and RE_YEAR.match(v):
-        vi = int(v)
-        return 2020 <= vi and vi <= 2030
-    return False
+    return 2020 <= int(v) <= 2030
 
 
 def valid_hgt(v):
@@ -153,17 +142,17 @@ def valid_hgt(v):
     # If cm, the number must be at least 150 and at most 193.
     # If in, the number must be at least 59 and at most 76.
     if v:
-        m = re.match(r"(?P<size>\d{2,3})(?P<unit>in|cm)", v)
+        m = re.match(r"^(?P<size>\d{2,3})(?P<unit>in|cm)$", v)
         if m:
             size = int(m.group("size"))
             min, max = (150, 193) if m.group("unit") == "cm" else (59, 76)
-            return min <= size and size <= max
+            return min <= size <= max
     return False
 
 
 def valid_hcl(v):
     # hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
-    return v and re.match(r"#[a-f0-9]{6}", v)
+    return v and re.match(r"^#[a-f0-9]{6}$", v)
 
 
 def valid_ecl(v):
@@ -173,7 +162,7 @@ def valid_ecl(v):
 
 def valid_pid(v):
     # pid (Passport ID) - a nine-digit number, including leading zeroes.
-    return v and re.match(r"\d{9}", v)
+    return v and re.match(r"^\d{9}$", v)
 
 
 def valid_cid(v):
@@ -192,52 +181,70 @@ FIELDS = {
     "cid": (False, valid_cid),  # "Country ID"
 }
 
-passport = []
-current_passport = []
-for l in shared.get_data(num_day=4):
-    if len(l) == 0:
-        if len(current_passport):
-            passport.append(" ".join(current_passport))
-            current_passport = []
-    else:
-        current_passport.append(l)
-passport.append(" ".join(current_passport))
 
-valid = 0
-invalid = 0
-uncorrect = 0
-optional = 0
-for i, pstr in enumerate(passport):
-    fields = pstr.split(" ")
-    fields_present = {k: False for k in FIELDS}
-    fields_present_or_optional = {k: False for k in FIELDS}
-    fields_valid = {k: False for k in FIELDS}
-    p = {}
-    for f in fields:
-        k, v = f.split(":")
-        p[k] = v
-        fields_present[k] = True
-        fields_present_or_optional[k] = True
+not_correct = 0
+not_valid = 0
+missing_required = 0
 
-    for k, (required, validator) in FIELDS.items():
-        val = validator(p.get(k, None))
-        fields_valid[k] = val
-        if not val:
-            print(f"Not Valid {k} {p.get(k)}")
-        if not required:
-            fields_present_or_optional[k] = True
 
-    if all(fields_valid.values()):
-        if all(fields_present.values()):
-            valid += 1
-        elif all(fields_present_or_optional.values()):
-            optional += 1
-        else:
-            invalid += 1
-    else:
-        uncorrect += 1
+def is_passport_valid(passport):
+    global not_correct, not_valid, missing_required
+    for field, (required, validator) in FIELDS.items():
+        if required and field not in passport:
+            missing_required += 1
+            return False
+        try:
+            if not validator(passport.get(field)):
+                not_valid += 1
+                return False
+        except Exception as e:
+            not_correct += 1
+            return False
+    return True
 
-print("#" * 5)
-print(
-    f"Found: valid {valid} ({valid+optional}) invalid {invalid} ({invalid+optional}) uncorrect {uncorrect} ({uncorrect+invalid}) optional {optional} passports"
+
+passports = (
+    dict(x.split(":") for x in blob.split())
+    for blob in shared.get_data_full(num_day=4).split("\n\n")
 )
+
+
+def old_way():
+    valid = 0
+    invalid = 0
+    uncorrect = 0
+    optional = 0
+    for i, passport in enumerate(passports):
+        fields_present = set()
+        fields_present_or_optional = set()
+        fields_valid = set()
+
+        for field, (required, validator) in FIELDS.items():
+            fields_present.add(field in passport)
+            fields_present_or_optional.add(field in passport if required else True)
+            try:
+                fields_valid.add(validator(passport[field]))
+            except:
+                fields_valid.add(False)
+
+        if all(fields_valid):
+            if all(fields_present):
+                valid += 1
+            elif all(fields_present_or_optional):
+                optional += 1
+            else:
+                invalid += 1
+        else:
+            uncorrect += 1
+
+    print(
+        f"Found: valid {valid} ({valid+optional}) invalid {invalid} ({invalid+optional}) uncorrect {uncorrect} ({uncorrect+invalid}) optional {optional} passports"
+    )
+
+
+def new_way():
+    valid = [is_passport_valid(p) for p in passports].count(True)
+    print(f"Valid: {valid} {not_correct} {not_valid} {missing_required}")
+
+
+new_way()

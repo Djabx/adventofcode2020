@@ -56,7 +56,7 @@ class Line:
         self.count = self.pwd.count(self.char)
 
     def is_ok(self):
-        test = self.min <= self.count and self.count <= self.max
+        test = self.min <= self.count <= self.max
         return test
 
     def _idx_is_char(self, idx):
