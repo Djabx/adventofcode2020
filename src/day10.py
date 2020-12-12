@@ -164,26 +164,39 @@ def part1():
     print(f"{step[1]} * {step[3]}  = {step[1] * step[3]}")
 
 
+def cache_me_this(fct):
+    cache = {}
+
+    def decorator(x, data):
+        if x not in cache:
+            r = fct(x, data)
+            cache[x] = r
+        return cache[x]
+
+    return decorator
+
+
+@cache_me_this
 def find_all_next_valid(idx, data):
     v0 = data[idx]
     length_data = len(data)
+    sum = 0
     if idx == length_data - 1:
-        yield 1
+        sum = 1
     else:
         for i in (1, 2, 3):
             ni = idx + i
             if ni < length_data:
                 if data[ni] <= v0 + 3:
-                    yield from find_all_next_valid(ni, data)
-                else:
-                    break
+                    sum += find_all_next_valid(ni, data)
+    return sum
 
 
 def part2():
     defined = tuple(sorted(load_data()))
     all_outlet = (0, *defined, max(defined) + 3)
 
-    founded = sum(find_all_next_valid(0, all_outlet))
+    founded = find_all_next_valid(0, all_outlet)
 
     print(f"Founded: {founded}")
 
