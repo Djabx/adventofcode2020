@@ -1,5 +1,5 @@
 import os, sys
-import shared
+from .. import shared
 
 """
 --- Day 1: Report Repair ---

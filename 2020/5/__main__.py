@@ -53,7 +53,7 @@ What is the ID of your seat?
 """
 
 import dataclasses
-import shared
+from .. import shared
 
 
 @dataclasses.dataclass(order=True)

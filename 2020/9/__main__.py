@@ -84,7 +84,7 @@ What is the encryption weakness in your XMAS-encrypted list of numbers?
 
 """
 
-import shared
+from .. import shared
 
 
 def data():

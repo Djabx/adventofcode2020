@@ -209,7 +209,7 @@ Again, at this point, people stop shifting around and the seating area reaches e
 Given the new visibility method and the rule change for occupied seats becoming empty, once equilibrium is reached, how many seats end up occupied?
 """
 
-import shared
+from .. import shared
 import dataclasses
 import typing
 import copy

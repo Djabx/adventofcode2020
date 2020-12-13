@@ -142,7 +142,7 @@ What is the total number of distinct ways you can arrange the adapters to connec
 """
 
 
-import shared
+from .. import shared
 
 
 def load_data():

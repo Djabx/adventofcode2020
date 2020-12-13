@@ -1,6 +1,6 @@
 import os, sys
 import dataclasses
-import shared
+from .. import shared
 
 """
 --- Day 2: Password Philosophy ---

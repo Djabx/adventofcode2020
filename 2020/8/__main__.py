@@ -85,7 +85,7 @@ Fix the program so that it terminates normally by changing exactly one jmp (to n
 
 """
 
-import shared
+from .. import shared
 import typing
 import dataclasses
 

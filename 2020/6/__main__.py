@@ -82,7 +82,7 @@ For each group, count the number of questions to which everyone answered "yes". 
 """
 
 
-import shared
+from .. import shared
 
 
 def part1():

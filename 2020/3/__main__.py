@@ -1,4 +1,4 @@
-import shared
+from .. import shared
 import collections
 
 """
