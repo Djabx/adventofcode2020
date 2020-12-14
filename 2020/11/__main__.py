@@ -224,6 +224,9 @@ class Position:
     x: int
     y: int
 
+    def __add__(self, other):
+        return Position(self.x + other.x, self.y + other.y)
+
 
 @dataclasses.dataclass
 class RoomConfiguration:
@@ -241,15 +244,11 @@ class RoomConfiguration:
         for x in range(len(self.state)):
             for y in range(len(self.state[x])):
                 p = Position(x, y)
-                if self.is_valid(p):
+                if self.is_valid(p) and self.is_seat(p):
                     yield p
 
     def is_valid(self, pos: Position) -> bool:
-        return (
-            0 <= pos.x < len(self.state)
-            and 0 <= pos.y < len(self.state[pos.x])
-            and self.is_seat(pos)
-        )
+        return 0 <= pos.x < len(self.state) and 0 <= pos.y < len(self.state[pos.x])
 
     def is_floor(self, pos: Position) -> bool:
         return self.state[pos.x][pos.y] == FLOOR
@@ -269,32 +268,27 @@ class RoomConfiguration:
                 if dx == dy == 0:
                     continue
                 p = Position(pos.x + dx, pos.y + dy)
-                if self.is_valid(p):
+                if self.is_valid(p) and self.is_seat(p):
                     yield p
 
-    def compute_next_state(self) -> bool:
-        changed = False
-        new_state = copy.deepcopy(self.state)
+    def get_next_seat(self, direction: Position, start_pos: Position) -> Position:
+        pos = start_pos
+        while True:
+            pos += direction
+            if self.is_valid(pos) and self.is_floor(pos):
+                continue
+            else:
+                return pos
 
-        def set_new_state(pos: Position, state: str):
-            new_state[pos.x][pos.y] = state
-
-        for pos in self:
-            if self.is_seat_empty(pos) and all(
-                self.is_seat_empty(adj) for adj in self.get_adjacent_seats(pos)
-            ):
-                changed = True
-                set_new_state(pos, SEAT_OCCUPIED)
-            if self.is_seat_occupied(pos):
-                adjs = list(self.get_adjacent_seats(pos))
-                num_occupied = len([1 for adj in adjs if self.is_seat_occupied(adj)])
-                if 4 <= num_occupied:
-                    changed = True
-                    set_new_state(pos, SEAT_EMPTY)
-
-        if changed:
-            self.state = new_state
-        return changed
+    def get_far_adjacent_seats(self, pos: Position) -> typing.Iterator[Position]:
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == dy == 0:
+                    continue
+                dir = Position(dx, dy)
+                p = self.get_next_seat(dir, pos)
+                if self.is_valid(p):
+                    yield p
 
     def count_occupied(self) -> int:
         return sum(1 for pos in self if self.is_seat_occupied(pos))
@@ -306,12 +300,64 @@ def load_data():
 
 def part1():
     rc = RoomConfiguration(load_data())
+    new_state = copy.deepcopy(rc.state)
+
+    def set_new_state(pos: Position, state: str):
+        new_state[pos.x][pos.y] = state
+
     changed = True
     while changed:
         print("-" * 10)
         print(str(rc))
-        changed = rc.compute_next_state()
+        changed = False
+        new_state = copy.deepcopy(rc.state)
+
+        for pos in rc:
+            if rc.is_seat_empty(pos) and all(
+                rc.is_seat_empty(adj) for adj in rc.get_adjacent_seats(pos)
+            ):
+                changed = True
+                set_new_state(pos, SEAT_OCCUPIED)
+            if rc.is_seat_occupied(pos):
+                adjs = list(rc.get_adjacent_seats(pos))
+                num_occupied = len([1 for adj in adjs if rc.is_seat_occupied(adj)])
+                if 4 <= num_occupied:
+                    changed = True
+                    set_new_state(pos, SEAT_EMPTY)
+        rc.state = new_state
+
     print(f"Found {rc.count_occupied()} occupied")
 
 
-part1()
+def part2():
+    rc = RoomConfiguration(load_data())
+    new_state = copy.deepcopy(rc.state)
+
+    def set_new_state(pos: Position, state: str):
+        new_state[pos.x][pos.y] = state
+
+    changed = True
+    while changed:
+        print("-" * 10)
+        print(str(rc))
+        changed = False
+        new_state = copy.deepcopy(rc.state)
+
+        for pos in rc:
+            if rc.is_seat_empty(pos) and all(
+                rc.is_seat_empty(adj) for adj in rc.get_far_adjacent_seats(pos)
+            ):
+                changed = True
+                set_new_state(pos, SEAT_OCCUPIED)
+            if rc.is_seat_occupied(pos):
+                adjs = list(rc.get_far_adjacent_seats(pos))
+                num_occupied = len([1 for adj in adjs if rc.is_seat_occupied(adj)])
+                if 5 <= num_occupied:
+                    changed = True
+                    set_new_state(pos, SEAT_EMPTY)
+        rc.state = new_state
+
+    print(f"Found {rc.count_occupied()} occupied")
+
+
+part2()
